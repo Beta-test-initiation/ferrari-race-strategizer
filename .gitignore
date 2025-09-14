@@ -1,0 +1,7 @@
+/cache
+data/
+
+frontend/node_modules
+package-lock.json
+
+venv
