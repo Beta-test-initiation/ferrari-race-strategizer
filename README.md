@@ -23,3 +23,8 @@ This system analyzes Ferrari's tire performance using real race data from the 20
 - **F1 Telemetry Data**: Lap times, pit stops, and stint information via FastF1 API
 - **Weather Data**: Historical track conditions via Visual Crossing API
 - **2025 Season Focus**: Analysis of Hamilton (HAM) and Leclerc (LEC) performance
+
+### Data Processing
+- **Stint-level Analysis**: Tire degradation rate calculation using linear regression
+- **Weather Integration**: Temperature correlation with tire wear patterns
+- **Feature Engineering**: Performance metrics for strategic decision making
