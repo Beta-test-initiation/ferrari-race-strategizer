@@ -1,0 +1,2 @@
+# This file ensures the saved_models directory is tracked in git
+# Trained models will be saved here after running the training script 
