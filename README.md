@@ -28,3 +28,60 @@ This system analyzes Ferrari's tire performance using real race data from the 20
 - **Stint-level Analysis**: Tire degradation rate calculation using linear regression
 - **Weather Integration**: Temperature correlation with tire wear patterns
 - **Feature Engineering**: Performance metrics for strategic decision making
+
+### Analysis & Visualization
+- **Degradation Rate Analysis**: Compound-specific tire wear patterns
+- **Temperature Correlation**: Track temperature impact on tire performance
+- **Track Comparison**: Performance variations across different circuits
+- **Ferrari Benchmarking**: Comparison against competitor tire strategies
+
+
+
+## Setup & Installation
+
+### 1. Clone and Setup Environment
+
+```bash
+git clone https://github.com/your-username/ferrari-strategy-maker.git
+cd ferrari-strategy-maker
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. Configure API Access
+
+Create a `.env` file in the project root:
+
+```bash
+# Required for weather data collection
+VISUAL_CROSSING_API_KEY=your_visual_crossing_api_key_here
+```
+
+**Get your API key**: [Visual Crossing Weather API](https://www.visualcrossing.com/weather-api)
+
+### 3. Run the Complete Analysis Pipeline
+
+```bash
+# Step 1: Collect F1 telemetry data
+python scripts/get_data.py
+
+# Step 2: Collect weather data for race locations
+python scripts/fetch_weather.py
+
+# Step 3: Process raw data into tire degradation metrics
+python scripts/preprocess_stints.py
+
+# Step 4: Merge weather data with stint analysis
+python scripts/merge_weather_into_stints.py
+```
+
+
+## License
+
+This project is for educational and analytical purposes. F1 data usage complies with FastF1 API terms of service.
+
