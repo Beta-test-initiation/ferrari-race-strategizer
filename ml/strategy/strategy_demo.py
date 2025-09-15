@@ -72,15 +72,15 @@ def main():
     
     # Example race state (Italian GP scenario)
     race_state = {
-        'current_lap': 22,
+        'current_lap': 0,
         'position': 4,
-        'tire_age': 22,
+        'tire_age': 1,
         'compound': 'MEDIUM',
         'track_temp': 40.0,  
         'track_id': 16,       # Monza
         'driver': 'LEC',
-        'gaps_ahead': [2.1, 5.7, 8.9],    # Gaps to P3, P2 and P1
-        'gaps_behind': [3.2, 8.9]    # Gaps from P5 and P6
+        'gaps_ahead': [1.1, 1.7, 1.9],    # Gaps to P3, P2 and P1
+        'gaps_behind': [1.2, 1.9]    # Gaps from P5 and P6
     }
     
     print("Current Race Situation:")
@@ -169,12 +169,45 @@ def main():
     
     print("Testing quick recommendations for different conditions:")
     
+
+    #note these only make sense for during the race not beginning
+    # test_conditions = [
+    #     {'tire_age': 25, 'compound': 'MEDIUM', 'description': 'Current medium tires'},
+    #     {'tire_age': 15, 'compound': 'SOFT', 'description': 'Fresh soft tires'},
+    #     {'tire_age': 30, 'compound': 'HARD', 'description': 'Old hard tires'}
+    # ]
+
+    # team strategy variants
+    # test_conditions = [
+    #     {'tire_age': 0, 'compound': 'SOFT', 'driver': 'HAM', 'description': 'Driver 1 on softs for split strategy'},
+    #     {'tire_age': 0, 'compound': 'MEDIUM', 'driver': 'LEC', 'description': 'Driver 2 on mediums for offset strategy'}
+    # ]
+
+    # Early race events
+    # test_conditions = [
+    #     {'current_lap': 3, 'compound': 'SOFT', 'tire_age': 3, 'description': 'Early safety car on softs – pit window opens early'},
+    #     {'current_lap': 5, 'compound': 'MEDIUM', 'tire_age': 5, 'gaps_ahead': [0.3], 'description': 'Tight DRS train – undercut possible'}
+    # ]
+
+    # Starting grid position
+    # test_conditions = [
+    #     {'position': 1, 'compound': 'SOFT', 'description': 'Pole position, defend with aggressive tire'},
+    #     {'position': 10, 'compound': 'MEDIUM', 'description': 'Midfield start, flexible strategy'},
+    #     {'position': 18, 'compound': 'HARD', 'description': 'Backmarker one-stop gamble'}
+    # ]
+
+
+    # Starting compound variants
     test_conditions = [
-        {'tire_age': 25, 'compound': 'MEDIUM', 'description': 'Current medium tires'},
-        {'tire_age': 15, 'compound': 'SOFT', 'description': 'Fresh soft tires'},
-        {'tire_age': 30, 'compound': 'HARD', 'description': 'Old hard tires'}
+        {'tire_age': 0, 'compound': 'SOFT', 'description': 'Start on softs for max launch potential'},
+        {'tire_age': 0, 'compound': 'MEDIUM', 'description': 'Balanced start on mediums'},
+        {'tire_age': 0, 'compound': 'HARD', 'description': 'One-stop strategy attempt starting on hards'}
     ]
-    
+
+
+
+
+    # again this is probably best for mid race scenarios
     for condition in test_conditions:
         quick_rec = optimizer.quick_pit_recommendation(
             current_lap=race_state['current_lap'],
