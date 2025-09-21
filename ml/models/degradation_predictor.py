@@ -259,7 +259,7 @@ class TireDegradationPredictor:
         return self.model_metrics
     
     def predict_degradation(self, track_temp, compound, stint_length, 
-                          track_id, driver='HAM', humidity=50, wind_speed=5):
+                          track_id, driver='LEC', humidity=50, wind_speed=5):
         """
         Predict tire degradation rate for given conditions.
         
@@ -336,10 +336,11 @@ class TireDegradationPredictor:
         Returns:
             str: Risk level ('LOW', 'MEDIUM', 'HIGH')
         """
+
         # Risk assessment based on degradation rate and uncertainty
-        if degradation_rate > 0.1 or std > 0.05:
+        if abs(degradation_rate) > 0.1 or std > 0.08:
             return 'HIGH'
-        elif degradation_rate > 0.05 or std > 0.03:
+        elif abs(degradation_rate) > 0.05 or std > 0.05:
             return 'MEDIUM'
         else:
             return 'LOW'
@@ -451,11 +452,11 @@ if __name__ == "__main__":
         
         # Make a prediction
         prediction = predictor.predict_degradation(
-            track_temp=45.0,
+            track_temp=27.0,
             compound="MEDIUM",
             stint_length=25,
             track_id=3,  # Example track
-            driver="HAM"
+            driver="LEC"
         )
         
         print(f"\nPrediction Example:")
@@ -469,7 +470,7 @@ if __name__ == "__main__":
             compound="MEDIUM",
             max_stint_length=40,
             track_id=3,
-            driver="HAM"
+            driver="LEC"
         )
         
         print(f"\nStint Length Analysis:")

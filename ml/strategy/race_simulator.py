@@ -67,7 +67,7 @@ class RaceSimulator:
         self.degradation_model = degradation_model
         
         # Simulation parameters
-        self.BASE_LAP_TIME = 85.0  # Base lap time in seconds
+        self.BASE_LAP_TIME = 104.0  # Base lap time in seconds
         self.FUEL_EFFECT = 0.03    # Seconds per kg of fuel
         self.DIRTY_AIR_EFFECT = 0.5  # Seconds lost in dirty air
         self.DRS_ADVANTAGE = 0.3   # DRS advantage in seconds

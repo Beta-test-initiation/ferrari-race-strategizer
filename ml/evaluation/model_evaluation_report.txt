@@ -3,43 +3,43 @@ FERRARI TIRE DEGRADATION MODEL - EVALUATION REPORT
 =================================================================
 
 OVERALL PERFORMANCE METRICS
-   • Mean Absolute Error:     0.0519 sec/lap
-   • Root Mean Square Error:  0.0684 sec/lap
-   • R² Score:               0.6966
-   • Test Samples:           49
-   • Median Absolute Error:  0.0404 sec/lap
+   • Mean Absolute Error:     0.0554 sec/lap
+   • Root Mean Square Error:  0.0760 sec/lap
+   • R² Score:               0.6379
+   • Test Samples:           51
+   • Median Absolute Error:  0.0405 sec/lap
 
 PREDICTION ACCURACY
-   • 90th Percentile Error:  0.0949 sec/lap
-   • Residual Mean:          0.0114 sec/lap
-   • Residual Std:           0.0675 sec/lap
+   • 90th Percentile Error:  0.1105 sec/lap
+   • Residual Mean:          0.0085 sec/lap
+   • Residual Std:           0.0756 sec/lap
 
 PERFORMANCE BY COMPOUND
-   • HARD  : MAE = 0.5579, R² = -0.127 (n=32)
-   • MEDIUM: MAE = 0.3461, R² = -0.056 (n=35)
-   • SOFT  : MAE = 2.6032, R² = -0.829 (n=7)
+   • HARD  : MAE = 0.5432, R² = -0.144 (n=34)
+   • MEDIUM: MAE = 0.3571, R² = -0.057 (n=37)
+   • SOFT  : MAE = 2.5990, R² = -0.820 (n=7)
 
 PERFORMANCE BY TEMPERATURE
-   • 14.4-16.7°C: MAE = 0.7375, R² = -0.244 (n=14)
-   • 26.8-27.6°C: MAE = 1.0764, R² = -0.168 (n=13)
-   • 30.0-33.3°C: MAE = 0.2740, R² = -0.791 (n=16)
-   • 22.7-25.4°C: MAE = 0.3732, R² = 0.028 (n=25)
-   • 18.5-20.3°C: MAE = 1.6924, R² = -1.186 (n=6)
+   • 14.4-16.7°C: MAE = 0.7424, R² = -0.267 (n=14)
+   • 26.8-27.6°C: MAE = 1.0737, R² = -0.163 (n=13)
+   • 30.0-33.3°C: MAE = 0.2667, R² = -0.702 (n=16)
+   • 22.7-25.4°C: MAE = 0.3934, R² = 0.002 (n=25)
+   • 18.5-21.3°C: MAE = 1.1422, R² = -0.712 (n=10)
 
 MODEL INTERPRETATION
    Top 3 Most Important Features:
-   1. StintLength_norm: 0.2333
-   2. WindSpeed_norm: 0.1710
-   3. Humidity_norm: 0.1491
+   1. StintLength_norm: 0.2510
+   2. TempStint_interaction: 0.2089
+   3. Track_encoded: 0.1546
 
 STRATEGIC INSIGHTS
-   • Model shows good predictive performance (R² = 0.697)
-   • Average prediction error: 0.0519 sec/lap
-   • Model reliability: High
+   • Model shows good predictive performance (R² = 0.638)
+   • Average prediction error: 0.0554 sec/lap
+   • Model reliability: Moderate
    
 RECOMMENDATIONS
-   • Use model for strategic guidance with 0.0519 sec/lap uncertainty
+   • Use model for strategic guidance with 0.0554 sec/lap uncertainty
    • Consider additional data for compounds with fewer samples
    • Monitor temperature-dependent performance variations
    
-Generated: 2025-09-13 23:05:52
+Generated: 2025-09-21 14:23:00

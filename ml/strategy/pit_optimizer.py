@@ -59,11 +59,11 @@ class PitStopOptimizer:
         """
         return {
             'pit_stop_time_loss': 22.0,  # Average pit stop time loss in seconds
-            'lap_time_baseline': 85.0,   # Baseline lap time in seconds
-            'track_length': 5.0,         # Track length in km
-            'total_laps': 60,           # Typical race distance
+            'lap_time_baseline': 110.0,   # Baseline lap time in seconds
+            'track_length': 6.003,         # Track length in km
+            'total_laps': 51,           # Typical race distance
             'drs_advantage': 0.3,       # DRS advantage in seconds
-            'overtaking_difficulty': 0.7  # 0-1 scale, 1 = very difficult
+            'overtaking_difficulty': 0.4  # 0-1 scale, 1 = very difficult
         }
     
     def optimize_pit_strategy(self, current_lap: int, current_position: int,
@@ -505,6 +505,7 @@ class PitStopOptimizer:
             extended_degradation['risk_level'] == 'HIGH' or
             tire_age > 30
         )
+
         
         if should_pit:
             # Recommend best compound for current conditions
@@ -544,7 +545,7 @@ class PitStopOptimizer:
 
 # Example usage and testing
 if __name__ == "__main__":
-    print("Ferrari Pit Stop Optimizer - Example Usage")
+    print("Ferrari Pit Stop Optimizer ")
     print("=" * 50)
     
     print("To use this optimizer:")

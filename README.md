@@ -68,16 +68,16 @@ VISUAL_CROSSING_API_KEY=your_visual_crossing_api_key_here
 
 ```bash
 # Step 1: Collect F1 telemetry data
-python scripts/get_data.py
+python3 scripts/get_data.py
 
 # Step 2: Collect weather data for race locations
-python scripts/fetch_weather.py
+python3 scripts/fetch_weather.py
 
 # Step 3: Process raw data into tire degradation metrics
-python scripts/preprocess_stints.py
+python3 scripts/preprocess_stints.py
 
 # Step 4: Merge weather data with stint analysis
-python scripts/merge_weather_into_stints.py
+python3 scripts/merge_weather_into_stints.py
 ```
 
 

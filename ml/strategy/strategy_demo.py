@@ -67,20 +67,20 @@ def main():
     print("Strategy optimization system ready")
     
     # Step 3: Demo Race Scenario
-    print("\nStep 3: Analyzing Current Race Situation")
+    print("\nStep 3: Analyzing Current Race Situation. - Example Usage DEGRADATION TOLERANCE INCREASED")
     print("-" * 30)
     
     # Example race state (Italian GP scenario)
     race_state = {
-        'current_lap': 0,
-        'position': 4,
-        'tire_age': 1,
+        'current_lap': 10,
+        'position': 7,
+        'tire_age': 10,
         'compound': 'MEDIUM',
-        'track_temp': 40.0,  
-        'track_id': 16,       # Monza
+        'track_temp': 27.0,  
+        'track_id': 17,       # Baku
         'driver': 'LEC',
-        'gaps_ahead': [1.1, 1.7, 1.9],    # Gaps to P3, P2 and P1
-        'gaps_behind': [1.2, 1.9]    # Gaps from P5 and P6
+        'gaps_ahead': [1.1, 1.7, 1.9],    # Gaps to people ahead
+        'gaps_behind': [1.2, 1.9]    # Gap from people behind
     }
     
     print("Current Race Situation:")
@@ -88,8 +88,8 @@ def main():
     print(f"  Position: P{race_state['position']}")
     print(f"  Tire: {race_state['compound']} compound, {race_state['tire_age']} laps old")
     print(f"  Track Temperature: {race_state['track_temp']}°C")
-    print(f"  Gap to P3: +{race_state['gaps_ahead'][0]:.1f}s")
-    print(f"  Gap to P5: -{race_state['gaps_behind'][0]:.1f}s")
+    print(f"  Gap to {race_state['position'] - 1}: +{race_state['gaps_ahead'][0]:.1f}s")
+    print(f"  Gap to {race_state['position'] + 1}: -{race_state['gaps_behind'][0]:.1f}s")
     
     # Step 4: Get Strategy Recommendation
     print("\nStep 4: Strategic Recommendation")
