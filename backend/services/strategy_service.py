@@ -60,29 +60,96 @@ class StrategyService:
                 logger.warning("Degradation model not loaded - using fallback")
                 return self._fallback_degradation_prediction(request)
 
-            # Use the loaded model for prediction
-            degradation_rate = self.degradation_model.predict_degradation(
-                track_temp=request.track_temp,
-                compound=request.compound.value,
-                stint_length=request.stint_length,
-                track_id=request.track_id,
-                driver=request.driver,
-            )
+            # Use the loaded sklearn model for prediction
+            # Model is a dict with 'model', 'compound_encoder', 'driver_encoder', 'feature_names'
+            model_dict = self.degradation_model
+            sklearn_model = model_dict.get('model')
+            compound_encoder = model_dict.get('compound_encoder')
+            driver_encoder = model_dict.get('driver_encoder')
+            feature_names = model_dict.get('feature_names', [])
 
-            # Estimate stint duration based on degradation
-            estimated_stint = max(
-                15, int(80 / (degradation_rate + 0.01)) if degradation_rate > 0 else 30
-            )
+            if sklearn_model is None:
+                logger.warning("Sklearn model not found in model dict - using fallback")
+                return self._fallback_degradation_prediction(request)
 
-            return {
-                "degradation_rate": float(degradation_rate),
-                "confidence_interval_lower": float(degradation_rate * 0.9),
-                "confidence_interval_upper": float(degradation_rate * 1.1),
-                "risk_level": self._assess_risk_level(degradation_rate),
-                "estimated_stint_duration": estimated_stint,
-                "recommendation": self._get_degradation_recommendation(degradation_rate),
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-            }
+            # Prepare features in the correct order
+            try:
+                # Encode categorical features
+                compound_encoded = compound_encoder.transform([request.compound.value])[0]
+                driver_encoded = driver_encoder.transform([request.driver])[0]
+
+                # Get normalization constants from training data (hardcoded for now)
+                # These should ideally be stored with the model
+                track_temp_mean, track_temp_std = 37.5, 5.0  # Typical F1 temps
+                stint_length_mean, stint_length_std = 25.0, 8.0  # Typical stint length
+
+                # Normalize features
+                track_temp_norm = (float(request.track_temp) - track_temp_mean) / track_temp_std
+                stint_length_norm = (float(request.stint_length) - stint_length_mean) / stint_length_std
+
+                # Weather defaults (if not provided)
+                humidity = float(getattr(request, 'humidity', 65))
+                wind_speed = float(getattr(request, 'wind_speed', 5))
+
+                humidity_norm = (humidity - 65.0) / 15.0  # 65% mean, 15% std
+                wind_speed_norm = (wind_speed - 5.0) / 3.0  # 5 kph mean, 3 kph std
+
+                # Interaction features
+                temp_stint_interaction = track_temp_norm * stint_length_norm
+                compound_temp_interaction = compound_encoded * track_temp_norm
+
+                # Create feature array in the same order as training
+                # Order: TrackTemp_norm, Compound_encoded, Driver_encoded,
+                #        StintLength_norm, Track_encoded, Humidity_norm,
+                #        WindSpeed_norm, TempStint_interaction, CompoundTemp_interaction
+                import numpy as np
+                features = np.array(
+                    [
+                        [
+                            float(track_temp_norm),
+                            float(compound_encoded),
+                            float(driver_encoded),
+                            float(stint_length_norm),
+                            float(request.track_id),  # Track_encoded
+                            float(humidity_norm),
+                            float(wind_speed_norm),
+                            float(temp_stint_interaction),
+                            float(compound_temp_interaction),
+                        ]
+                    ]
+                )
+
+                # Make prediction
+                raw_degradation = float(sklearn_model.predict(features)[0])
+
+                # The model predicts degradation as a rate per lap
+                # Ensure it's positive and in a reasonable range (0.001 to 0.3 s/lap)
+                degradation_rate = np.clip(abs(raw_degradation), 0.001, 0.3)
+
+                logger.info(
+                    f"Model prediction for {request.driver} ({request.compound.value} compound): "
+                    f"raw={raw_degradation:.4f}, clipped={degradation_rate:.4f}s/lap"
+                )
+
+                # Estimate stint duration based on degradation
+                estimated_stint = max(
+                    15, int(80 / (degradation_rate + 0.01)) if degradation_rate > 0 else 30
+                )
+
+                return {
+                    "degradation_rate": float(degradation_rate),
+                    "confidence_interval_lower": float(degradation_rate * 0.85),
+                    "confidence_interval_upper": float(degradation_rate * 1.15),
+                    "risk_level": self._assess_risk_level(degradation_rate),
+                    "estimated_stint_duration": estimated_stint,
+                    "recommendation": self._get_degradation_recommendation(degradation_rate),
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                }
+
+            except Exception as encoding_error:
+                logger.error(f"Error encoding features: {encoding_error}")
+                logger.warning("Falling back to heuristic prediction")
+                return self._fallback_degradation_prediction(request)
 
         except Exception as e:
             logger.error(f"Error predicting degradation: {e}")

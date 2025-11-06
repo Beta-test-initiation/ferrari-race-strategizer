@@ -1,5 +1,6 @@
 import React from 'react'
-import { AlertTriangle, Clock, Zap, TrendingUp } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
+import { useWebSocket } from '../hooks/useWebSocket'
 
 interface Alert {
   id: string
@@ -7,52 +8,32 @@ interface Alert {
   message: string
   timestamp: Date
   driver?: 'HAM' | 'LEC'
-  icon?: React.ReactNode
 }
 
 const LiveAlerts: React.FC = () => {
-  const [alerts, setAlerts] = React.useState<Alert[]>([
-    {
-      id: '1',
-      type: 'critical',
-      message: 'PIT WINDOW OPEN - Hamilton optimal pit in 2 laps',
-      timestamp: new Date(),
-      driver: 'HAM',
-      icon: <Clock className="w-5 h-5" />
-    },
-    {
-      id: '2',
-      type: 'warning',
-      message: 'Track temperature rising - tire degradation increasing',
-      timestamp: new Date(Date.now() - 30000),
-      icon: <TrendingUp className="w-5 h-5" />
-    },
-    {
-      id: '3',
-      type: 'info',
-      message: 'DRS enabled - undercut opportunity available',
-      timestamp: new Date(Date.now() - 60000),
-      icon: <Zap className="w-5 h-5" />
-    }
-  ])
+  const [alerts, setAlerts] = React.useState<Alert[]>([])
+  const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000'
 
-  // TODO: Implement real-time alert system from backend
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      // Simulate new alerts
-      const newAlert: Alert = {
-        id: Date.now().toString(),
-        type: Math.random() > 0.7 ? 'critical' : Math.random() > 0.5 ? 'warning' : 'info',
-        message: 'System update - Strategy recommendations refreshed',
-        timestamp: new Date(),
-        icon: <AlertTriangle className="w-5 h-5" />
+  // Connect to WebSocket for real-time alerts
+  useWebSocket({
+    url: `${apiUrl}/ws/alerts`,
+    onMessage: (message) => {
+      if (message.type === 'alert') {
+        const newAlert: Alert = {
+          id: message.data?.id || Date.now().toString(),
+          type: (message.data?.severity || 'info').toLowerCase() as 'critical' | 'warning' | 'info',
+          message: message.data?.message || 'Alert received',
+          timestamp: new Date(message.data?.timestamp || new Date()),
+          driver: message.data?.driver
+        }
+
+        setAlerts(prev => [newAlert, ...prev.slice(0, 4)]) // Keep only 5 latest alerts
       }
-      
-      setAlerts(prev => [newAlert, ...prev.slice(0, 4)]) // Keep only 5 latest alerts
-    }, 30000) // Update every 30 seconds
-
-    return () => clearInterval(interval)
-  }, [])
+    },
+    onError: (error) => {
+      console.error('WebSocket error:', error)
+    }
+  })
 
   const getAlertClasses = (type: Alert['type']) => {
     switch (type) {
@@ -109,7 +90,7 @@ const LiveAlerts: React.FC = () => {
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-3">
                 <div className="mt-1">
-                  {alert.icon}
+                  <AlertTriangle className="w-5 h-5 text-ferrari-red" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">

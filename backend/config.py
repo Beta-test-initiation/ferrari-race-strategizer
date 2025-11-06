@@ -32,7 +32,7 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 
 # Model paths
-DEGRADATION_MODEL_PATH = MODELS_DIR / "tire_degradation_predictor.pkl"
+DEGRADATION_MODEL_PATH = MODELS_DIR / "ferrari_degradation_model.pkl"
 
 # Logging Configuration
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
