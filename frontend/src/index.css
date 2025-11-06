@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Rajdhani', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .racing-grid {
+    background-image: 
+      linear-gradient(rgba(220, 20, 60, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(220, 20, 60, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .carbon-fiber {
+    background: 
+      radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0),
+      linear-gradient(45deg, #1a1a1a 25%, transparent 25%), 
+      linear-gradient(-45deg, #1a1a1a 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, #1a1a1a 75%), 
+      linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+    background-size: 4px 4px;
+    background-position: 0 0, 0 0, 0 0, 2px 2px, 2px 2px;
+  }
+}
+
+@layer components {
+  .dashboard-panel {
+    @apply bg-ferrari-gray-800 border border-ferrari-gray-700 rounded-lg shadow-xl backdrop-blur-sm;
+  }
+
+  .ferrari-button {
+    @apply bg-ferrari-red hover:bg-ferrari-darkred text-ferrari-white font-bold py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+
+  .data-display {
+    @apply font-mono text-lg;
+  }
+
+  .alert-critical {
+    @apply bg-ferrari-red text-ferrari-white animate-flash;
+  }
+
+  .alert-warning {
+    @apply bg-ferrari-yellow text-ferrari-black;
+  }
+
+  .alert-info {
+    @apply bg-ferrari-gray-600 text-ferrari-white;
+  }
+} 

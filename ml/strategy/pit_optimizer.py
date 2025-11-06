@@ -483,7 +483,7 @@ class PitStopOptimizer:
     
     def quick_pit_recommendation(self, current_lap: int, tire_age: int,
                                current_compound: str, track_temp: float,
-                               track_id: int, driver: str = "HAM") -> Dict:
+                               track_id: int, driver: str = "LEC") -> Dict:
         """
         Quick pit stop recommendation for immediate decisions.
         
@@ -509,8 +509,13 @@ class PitStopOptimizer:
         
         if should_pit:
             # Recommend best compound for current conditions
-            best_compound = self._recommend_compound(track_temp, current_compound)
-            
+            best_compound = self._recommend_compound(current_lap=current_lap,
+                        tire_age=tire_age,
+                        current_compound=current_compound,
+                        track_temp=track_temp,
+                        track_id=track_id,
+                        driver=driver)
+                                
             return {
                 'recommendation': 'PIT_NOW',
                 'recommended_compound': best_compound,
@@ -527,20 +532,67 @@ class PitStopOptimizer:
                 'reasoning': f"Degradation still manageable ({extended_degradation['degradation_rate']:.3f} sec/lap)"
             }
     
-    def _recommend_compound(self, track_temp: float, current_compound: str) -> str:
+    def _recommend_compound(self,
+                        current_lap: int,
+                        tire_age: int,
+                        current_compound: str,
+                        track_temp: float,
+                        track_id: int,
+                        driver: str = "LEC",
+                        total_laps: int = 70) -> str:
         """
-        Recommend best tire compound for current conditions.
+        Recommend best tire compound considering model predictions,
+        stint feasibility, degradation risk, and Ferrari's compound reliability.
+        """
+
+        candidate_compounds = ["SOFT", "MEDIUM", "HARD"]
+        compound_scores = {}
+
+        # Remaining stint length = laps left in race after pit
         
-        Returns:
-            str: Recommended compound
-        """
-        # Based on temperature and Ferrari's model performance
-        if track_temp > 40:
-            return "HARD"
-        elif track_temp > 30:
-            return "MEDIUM"  # Ferrari's sweet spot
-        else:
-            return "SOFT"
+        total_laps = self.track_config['total_laps']
+        laps_remaining = total_laps - current_lap
+
+        for comp in candidate_compounds:
+            pred = self.degradation_model.predict_degradation(
+                track_temp=track_temp,
+                compound=comp,
+                stint_length=laps_remaining,
+                track_id=track_id,
+                driver=driver
+            )
+
+            rate = pred['degradation_rate']
+            std = pred['prediction_std']
+            risk = pred['risk_level']
+
+            # Base score: expected degradation per lap (lower is better)
+            score = abs(rate)
+
+            # Penalize uncertainty
+            score += std * 0.5
+
+            # Add risk penalty
+            if risk == "HIGH":
+                score += 0.15
+            elif risk == "MEDIUM":
+                score += 0.05
+
+            # Feasibility penalty: if predicted stint is longer than compound tolerance
+            max_stint = {"SOFT": 9, "MEDIUM": 35, "HARD": 55}[comp]
+            if laps_remaining > max_stint:
+                score += 0.25 * (laps_remaining - max_stint)
+
+            compound_scores[comp] = score
+
+        best_compound = min(compound_scores, key=compound_scores.get)
+        print(f"RECOMMENDED COMPOUND: ----------{best_compound}")
+
+        print(f"[DEBUG] Compound scoring at {track_temp}°C / stint={laps_remaining}: "
+            f"{compound_scores} -> {best_compound}")
+
+        return best_compound
+
 
 
 # Example usage and testing
