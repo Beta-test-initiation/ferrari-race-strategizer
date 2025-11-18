@@ -1,0 +1,34 @@
+# Backend API Requirements
+# Install with: pip install -r backend/requirements.txt
+
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Data Validation
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Async Support
+asyncio==3.4.3
+
+# CORS
+python-cors==1.6.0
+
+# Logging
+python-json-logger==2.0.7
+
+# ML Dependencies (from main requirements.txt)
+scikit-learn==1.3.2
+pandas==2.1.3
+numpy==1.26.2
+joblib==1.3.2
+
+# Optional: for development
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.0

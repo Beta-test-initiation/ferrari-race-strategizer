@@ -1,9 +1,12 @@
 import React from 'react'
-import { Timer, Flag, TrendingUp, Users, Thermometer } from 'lucide-react'
+import { Flag, TrendingUp, Users, Thermometer } from 'lucide-react'
+import { useWebSocket } from '../hooks/useWebSocket'
+import apiClient from '../services/api'
+import type { RaceState } from '../services/api'
 
 interface DriverData {
   name: string
-  code: 'HAM' | 'LEC'
+  code: string
   position: number
   currentTire: 'SOFT' | 'MEDIUM' | 'HARD'
   tireLaps: number
@@ -15,58 +18,76 @@ interface DriverData {
 }
 
 const StrategyOverview: React.FC = () => {
-  const [raceData, setRaceData] = React.useState({
-    currentLap: 32,
-    totalLaps: 58,
-    raceTime: '1:24:37',
-    trackTemp: 42,
-    airTemp: 28,
-    weather: 'Clear',
-    safetyCarDeployed: false
+  const [raceData, setRaceData] = React.useState<Omit<RaceState, 'drivers'> | null>(null)
+  const [drivers, setDrivers] = React.useState<DriverData[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+
+  // Connect to WebSocket for real-time updates
+  useWebSocket({
+    url: 'ws://localhost:8000/ws/live-updates',
+    onMessage: (message) => {
+      if (message.type === 'RACE_STATE_UPDATE' && message.data) {
+        // Update with WebSocket data
+        const data = message.data
+        setRaceData(prev => prev ? {
+          ...prev,
+          current_lap: data.current_lap ?? prev.current_lap,
+          track_temp: data.track_temp ?? prev.track_temp,
+          air_temp: data.air_temp ?? prev.air_temp,
+        } : null)
+      }
+    },
   })
 
-  const [drivers, setDrivers] = React.useState<DriverData[]>([
-    {
-      name: 'Lewis Hamilton',
-      code: 'HAM',
-      position: 3,
-      currentTire: 'MEDIUM',
-      tireLaps: 14,
-      lastLapTime: '1:28.452',
-      gap: '+8.234',
-      pitStops: 1,
-      nextPitWindow: 'LAP 38-42',
-      strategy: 'M-H-M'
-    },
-    {
-      name: 'Charles Leclerc',
-      code: 'LEC',
-      position: 5,
-      currentTire: 'HARD',
-      tireLaps: 18,
-      lastLapTime: '1:28.891',
-      gap: '+15.678',
-      pitStops: 1,
-      nextPitWindow: 'LAP 45-50',
-      strategy: 'M-H-M'
-    }
-  ])
-
-  // TODO: Implement real-time data updates from backend
+  // Load initial race data
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      setRaceData(prev => ({
-        ...prev,
-        currentLap: prev.currentLap + 1,
-        trackTemp: prev.trackTemp + (Math.random() - 0.5) * 2
-      }))
-      
-      setDrivers(prev => prev.map(driver => ({
-        ...driver,
-        tireLaps: driver.tireLaps + 1,
-        lastLapTime: `1:${28 + Math.floor(Math.random() * 2)}.${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
-      })))
-    }, 10000) // Update every 10 seconds
+    const loadRaceData = async () => {
+      try {
+        setLoading(true)
+        const race = await apiClient.getCurrentRaceState()
+        setRaceData(race)
+
+        // Convert API drivers to our format
+        const formattedDrivers: DriverData[] = race.drivers.slice(0, 2).map(driver => ({
+          name: driver.name,
+          code: driver.name === 'Hamilton' ? 'HAM' : driver.name === 'Leclerc' ? 'LEC' : 'N/A',
+          position: driver.position,
+          currentTire: driver.tire_compound as 'SOFT' | 'MEDIUM' | 'HARD',
+          tireLaps: driver.tire_age,
+          lastLapTime: driver.lap_time,
+          gap: `+${driver.gap.toFixed(3)}`,
+          pitStops: driver.pit_stops,
+          nextPitWindow: 'LAP 38-42',
+          strategy: 'M-H-M'
+        }))
+
+        setDrivers(formattedDrivers)
+        setError(null)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load race data'
+        setError(message)
+        // Use fallback data if API is unavailable
+        setRaceData({
+          race_name: 'Abu Dhabi GP',
+          season: 2025,
+          current_lap: 32,
+          total_laps: 58,
+          race_time: '1:24:37',
+          track_temp: 42,
+          air_temp: 28,
+          weather: 'Clear',
+          safety_car_active: false,
+          status: 'RUNNING',
+          timestamp: new Date().toISOString(),
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadRaceData()
+    const interval = setInterval(loadRaceData, 10000) // Refresh every 10 seconds
 
     return () => clearInterval(interval)
   }, [])
@@ -101,13 +122,13 @@ const StrategyOverview: React.FC = () => {
           <div className="text-center">
             <p className="text-ferrari-gray-400 text-sm">LAP</p>
             <p className="text-ferrari-white font-bold text-xl">
-              {raceData.currentLap}/{raceData.totalLaps}
+              {raceData ? `${raceData.current_lap}/${raceData.total_laps}` : '--/--'}
             </p>
           </div>
           <div className="text-center">
             <p className="text-ferrari-gray-400 text-sm">RACE TIME</p>
             <p className="text-ferrari-white font-bold text-xl font-mono">
-              {raceData.raceTime}
+              {raceData ? raceData.race_time : '--:--:--'}
             </p>
           </div>
         </div>
@@ -121,39 +142,39 @@ const StrategyOverview: React.FC = () => {
             <span className="text-ferrari-gray-400 text-sm">TRACK TEMP</span>
           </div>
           <p className="text-2xl font-bold text-ferrari-white">
-            {raceData.trackTemp.toFixed(1)}°C
+            {raceData ? raceData.track_temp.toFixed(1) : '--'}°C
           </p>
         </div>
-        
+
         <div className="bg-ferrari-gray-900 rounded-lg p-4">
           <div className="flex items-center space-x-2 mb-2">
             <Thermometer className="w-5 h-5 text-ferrari-silver" />
             <span className="text-ferrari-gray-400 text-sm">AIR TEMP</span>
           </div>
           <p className="text-2xl font-bold text-ferrari-white">
-            {raceData.airTemp}°C
+            {raceData ? raceData.air_temp : '--'}°C
           </p>
         </div>
-        
+
         <div className="bg-ferrari-gray-900 rounded-lg p-4">
           <div className="flex items-center space-x-2 mb-2">
             <Users className="w-5 h-5 text-ferrari-gold" />
             <span className="text-ferrari-gray-400 text-sm">WEATHER</span>
           </div>
           <p className="text-2xl font-bold text-ferrari-white">
-            {raceData.weather}
+            {raceData ? raceData.weather : '--'}
           </p>
         </div>
-        
+
         <div className="bg-ferrari-gray-900 rounded-lg p-4">
           <div className="flex items-center space-x-2 mb-2">
             <TrendingUp className="w-5 h-5 text-ferrari-red" />
             <span className="text-ferrari-gray-400 text-sm">SAFETY CAR</span>
           </div>
           <p className={`text-2xl font-bold ${
-            raceData.safetyCarDeployed ? 'text-ferrari-yellow' : 'text-ferrari-silver'
+            raceData && raceData.safety_car_active ? 'text-ferrari-yellow' : 'text-ferrari-silver'
           }`}>
-            {raceData.safetyCarDeployed ? 'DEPLOYED' : 'CLEAR'}
+            {raceData && raceData.safety_car_active ? 'DEPLOYED' : 'CLEAR'}
           </p>
         </div>
       </div>

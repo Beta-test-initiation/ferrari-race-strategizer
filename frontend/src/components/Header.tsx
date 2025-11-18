@@ -1,14 +1,40 @@
 import React from 'react'
 import { Clock, Wifi, WifiOff } from 'lucide-react'
+import { useWebSocket } from '../hooks/useWebSocket'
+import apiClient from '../services/api'
 
 const Header: React.FC = () => {
   const [currentTime, setCurrentTime] = React.useState<string>('')
   const [isConnected, setIsConnected] = React.useState<boolean>(true)
+  const [apiError, setApiError] = React.useState<string | null>(null)
+  const [trackTemp, setTrackTemp] = React.useState<number | null>(null)
+  const [raceStatus, setRaceStatus] = React.useState<string>('LIVE')
 
+  // Connect to WebSocket for real-time updates
+  const { isConnected: wsConnected } = useWebSocket({
+    url: 'ws://localhost:8000/ws/live-updates',
+    onMessage: (message) => {
+      if (message.type === 'RACE_STATE_UPDATE' && message.data) {
+        setTrackTemp(message.data.track_temp)
+      }
+    },
+    onConnect: () => {
+      setIsConnected(true)
+      setApiError(null)
+    },
+    onDisconnect: () => {
+      setIsConnected(false)
+    },
+    onError: () => {
+      setApiError('WebSocket connection failed')
+    },
+  })
+
+  // Update time every second
   React.useEffect(() => {
     const updateTime = () => {
       const now = new Date()
-      setCurrentTime(now.toLocaleTimeString('en-US', { 
+      setCurrentTime(now.toLocaleTimeString('en-US', {
         hour12: false,
         hour: '2-digit',
         minute: '2-digit',
@@ -22,19 +48,29 @@ const Header: React.FC = () => {
     return () => clearInterval(interval)
   }, [])
 
-  // TODO: Implement actual connection status checking
+  // Check API health and get race data
   React.useEffect(() => {
-    const checkConnection = () => {
-      setIsConnected(navigator.onLine)
+    const checkAPIHealth = async () => {
+      try {
+        const health = await apiClient.getHealth()
+        setIsConnected(health.status === 'healthy' || health.status === 'degraded')
+        setApiError(null)
+
+        // Try to get race status
+        const raceStatus = await apiClient.getRaceStatus()
+        setRaceStatus('RUNNING')
+        setTrackTemp(raceStatus.leader ? 0 : null)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'API unavailable'
+        setApiError(message)
+        setIsConnected(false)
+      }
     }
 
-    window.addEventListener('online', checkConnection)
-    window.addEventListener('offline', checkConnection)
+    checkAPIHealth()
+    const interval = setInterval(checkAPIHealth, 10000) // Check every 10 seconds
 
-    return () => {
-      window.removeEventListener('online', checkConnection)
-      window.removeEventListener('offline', checkConnection)
-    }
+    return () => clearInterval(interval)
   }, [])
 
   return (
@@ -62,7 +98,7 @@ const Header: React.FC = () => {
           <div className="hidden md:flex items-center space-x-6">
             <div className="text-center">
               <p className="text-ferrari-gray-400 text-sm">RACE STATUS</p>
-              <p className="text-ferrari-white font-bold">PRACTICE</p>
+              <p className="text-ferrari-white font-bold">{raceStatus}</p>
             </div>
             <div className="text-center">
               <p className="text-ferrari-gray-400 text-sm">NEXT SESSION</p>
@@ -70,7 +106,7 @@ const Header: React.FC = () => {
             </div>
             <div className="text-center">
               <p className="text-ferrari-gray-400 text-sm">TRACK TEMP</p>
-              <p className="text-ferrari-white font-bold">42°C</p>
+              <p className="text-ferrari-white font-bold">{trackTemp ? `${trackTemp}°C` : '--°C'}</p>
             </div>
           </div>
 
