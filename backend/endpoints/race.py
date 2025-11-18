@@ -4,12 +4,13 @@ import logging
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
 from backend.models import TireCompound
+from backend.services.live_data_service import get_live_race_data, get_data_source_info
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["race"])
 
 
-# Mock race data - in production, this would come from a database or live F1 API
+# Mock race data - fallback when live data unavailable
 CURRENT_RACE_STATE = {
     "race_name": "Abu Dhabi Grand Prix",
     "season": 2025,
@@ -135,10 +136,24 @@ async def get_current_race_state():
     """
     try:
         logger.info("Current race state requested")
-        return {
-            **CURRENT_RACE_STATE,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-        }
+
+        # Try to fetch live data from FastF1
+        live_data = get_live_race_data()
+
+        if live_data:
+            logger.info("Using live race data from FastF1")
+            return {
+                **live_data,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "data_source": "live",
+            }
+        else:
+            logger.info("Live data unavailable, using mock race data")
+            return {
+                **CURRENT_RACE_STATE,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "data_source": "mock",
+            }
     except Exception as e:
         logger.error(f"Error fetching race state: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -246,3 +261,21 @@ async def race_health():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=503, detail="Race service unavailable")
+
+
+@router.get(
+    "/data-source",
+    summary="Get data source info",
+    description="Check which data source is being used (live FastF1 or mock)",
+)
+async def get_data_source():
+    """Get information about the current data source."""
+    try:
+        logger.info("Data source info requested")
+        return {
+            **get_data_source_info(),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+    except Exception as e:
+        logger.error(f"Error fetching data source info: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
