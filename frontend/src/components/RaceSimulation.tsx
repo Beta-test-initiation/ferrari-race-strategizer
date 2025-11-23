@@ -25,34 +25,9 @@ interface SimulationData {
 const RaceSimulation: React.FC = () => {
   const [raceData, setRaceData] = React.useState<RaceState | null>(null)
   const [isRunning, setIsRunning] = React.useState(false)
-  const [selectedScenario, setSelectedScenario] = React.useState<string>('aggressive')
+  const [selectedScenario, setSelectedScenario] = React.useState<string>('early')
   const [simulationProgress, setSimulationProgress] = React.useState(0)
-  const [scenarios, setScenarios] = React.useState<SimulationScenario[]>([
-    {
-      id: 'aggressive',
-      name: 'Aggressive Undercut',
-      description: 'Early pit stops to gain track position',
-      strategy_name: 'AGGRESSIVE_UNDERCUT',
-      pit_lap: 28,
-      new_compound: 'SOFT',
-    },
-    {
-      id: 'conservative',
-      name: 'Conservative Long Stint',
-      description: 'Extended first stint for better tire window',
-      strategy_name: 'CONSERVATIVE_LONG_STINT',
-      pit_lap: 38,
-      new_compound: 'HARD',
-    },
-    {
-      id: 'weather',
-      name: 'Weather Reactive',
-      description: 'Strategy adapted for rain probability',
-      strategy_name: 'DYNAMIC_POSITION_PLAY',
-      pit_lap: 32,
-      new_compound: 'MEDIUM',
-    },
-  ])
+  const [scenarios, setScenarios] = React.useState<SimulationScenario[]>([])
 
   const [simulationData, setSimulationData] = React.useState<SimulationData[]>([
     { lap: 5, hamilton_pos: 3, leclerc_pos: 5, gap_to_leader: 8.5, points_projection: 15 },
@@ -70,21 +45,57 @@ const RaceSimulation: React.FC = () => {
         const race = await apiClient.getCurrentRaceState()
         setRaceData(race)
 
+        // Find Ferrari drivers (Leclerc #16, Hamilton #44)
+        const ferrariDriver = race.drivers.find(d => d.number === 16 || d.number === 44)
+        if (!ferrariDriver) return
+
+        const currentLap = race.current_lap
+        const totalLaps = race.total_laps
+        const lapsRemaining = totalLaps - currentLap
+
+        // Generate dynamic scenarios based on current race state
+        const dynamicScenarios: SimulationScenario[] = [
+          {
+            id: 'early',
+            name: 'Early Pit (Next Lap)',
+            description: `Pit immediately to gain advantage. Fresh tires for remaining ${lapsRemaining} laps`,
+            strategy_name: 'AGGRESSIVE_UNDERCUT',
+            pit_lap: currentLap + 1,
+            new_compound: ferrariDriver.tire_compound === 'SOFT' ? 'MEDIUM' : 'SOFT',
+          },
+          {
+            id: 'mid',
+            name: 'Mid-Strategy Pit',
+            description: `Pit in 5 laps to optimize tire wear and track position`,
+            strategy_name: 'DYNAMIC_POSITION_PLAY',
+            pit_lap: currentLap + 5,
+            new_compound: ferrariDriver.tire_compound === 'HARD' ? 'MEDIUM' : 'HARD',
+          },
+          {
+            id: 'late',
+            name: 'Extended Stint',
+            description: `Push current tires longer for late-race advantage`,
+            strategy_name: 'CONSERVATIVE_LONG_STINT',
+            pit_lap: currentLap + 10,
+            new_compound: ferrariDriver.tire_compound === 'SOFT' ? 'HARD' : 'SOFT',
+          },
+        ]
+
         // Run simulations for each scenario
         const updatedScenarios = await Promise.all(
-          scenarios.map(async (scenario) => {
+          dynamicScenarios.map(async (scenario) => {
             try {
               const result = await apiClient.simulateRace({
                 race_state: {
                   current_lap: race.current_lap,
-                  position: race.drivers[0].position,
-                  tire_age: race.drivers[0].tire_age,
-                  compound: race.drivers[0].tire_compound as 'SOFT' | 'MEDIUM' | 'HARD',
+                  position: ferrariDriver.position,
+                  tire_age: ferrariDriver.tire_age,
+                  compound: ferrariDriver.tire_compound as 'SOFT' | 'MEDIUM' | 'HARD',
                   track_temp: race.track_temp,
                   track_id: 1,
-                  driver: 'HAM',
+                  driver: ferrariDriver.name,
                   gaps_ahead: [],
-                  gaps_behind: race.drivers.slice(1, 3).map(d => d.gap_to_leader),
+                  gaps_behind: race.drivers.filter(d => d.position > ferrariDriver.position).slice(0, 3).map(d => d.gap_to_leader),
                   total_laps: race.total_laps,
                 },
                 strategy_name: scenario.strategy_name,
@@ -100,6 +111,7 @@ const RaceSimulation: React.FC = () => {
           })
         )
         setScenarios(updatedScenarios)
+        setSelectedScenario('mid') // Default to mid-strategy
       } catch (err) {
         console.error('Failed to load race data:', err)
       }

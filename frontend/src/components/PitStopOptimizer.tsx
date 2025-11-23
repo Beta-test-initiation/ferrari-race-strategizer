@@ -196,43 +196,45 @@ const PitStopOptimizer: React.FC = () => {
       <div className="space-y-4">
         <h3 className="text-lg font-bold text-ferrari-white">COMPETITOR ANALYSIS</h3>
         {competitors.length > 0 ? (
-          <div className="space-y-2">
-            {competitors.map((comp, index) => (
-              <div key={index} className="bg-ferrari-gray-900 rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-ferrari-gray-600 flex items-center justify-center">
-                      <span className="text-ferrari-white font-bold text-sm">P{comp.position}</span>
-                    </div>
-                    <div>
-                      <p className="text-ferrari-white font-bold">{comp.name}</p>
-                      <p className="text-ferrari-gray-400 text-sm">
-                        {comp.gap > 0 ? `+${comp.gap.toFixed(1)}s` : `${comp.gap.toFixed(1)}s`}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-4">
-                    <div className="text-center">
-                      <p className="text-ferrari-gray-400 text-xs">TIRE</p>
-                      <div className="flex items-center space-x-1">
-                        <span className={`px-1 py-0.5 rounded font-bold text-xs ${getTireColor(comp.currentTire)}`}>
-                          {comp.currentTire}
-                        </span>
-                        <span className="text-ferrari-white text-xs">{comp.tireLaps}</span>
+          <div className="bg-ferrari-gray-800 rounded-lg border border-ferrari-gray-700 max-h-48 overflow-y-auto">
+            <div className="space-y-1 p-2">
+              {competitors.map((comp, index) => (
+                <div key={index} className="bg-ferrari-gray-900 rounded-lg p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-ferrari-gray-600 flex items-center justify-center flex-shrink-0">
+                        <span className="text-ferrari-white font-bold text-xs">P{comp.position}</span>
+                      </div>
+                      <div className="min-w-0 flex-shrink">
+                        <p className="text-ferrari-white font-bold text-sm truncate">{comp.name}</p>
+                        <p className="text-ferrari-gray-400 text-xs">
+                          {comp.gap > 0 ? `+${comp.gap.toFixed(1)}s` : `${comp.gap.toFixed(1)}s`}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="text-center">
-                      <p className="text-ferrari-gray-400 text-xs">THREAT</p>
-                      <p className={`font-bold text-xs ${getThreatColor(comp.threat)}`}>
-                        {comp.threat}
-                      </p>
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                      <div className="text-center">
+                        <p className="text-ferrari-gray-400 text-xs">TIRE</p>
+                        <div className="flex items-center space-x-0.5">
+                          <span className={`px-1 py-0.5 rounded font-bold text-xs ${getTireColor(comp.currentTire)}`}>
+                            {comp.currentTire}
+                          </span>
+                          <span className="text-ferrari-white text-xs">{comp.tireLaps}</span>
+                        </div>
+                      </div>
+
+                      <div className="text-center">
+                        <p className="text-ferrari-gray-400 text-xs">THREAT</p>
+                        <p className={`font-bold text-xs ${getThreatColor(comp.threat)}`}>
+                          {comp.threat}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ) : (
           <p className="text-ferrari-gray-400">No competitors detected</p>

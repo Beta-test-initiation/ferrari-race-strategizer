@@ -21,7 +21,7 @@ RELOAD = os.getenv("API_RELOAD", "true").lower() == "true"
 
 # CORS Configuration
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-CORS_ORIGINS = [FRONTEND_URL]
+CORS_ORIGINS = [FRONTEND_URL, "http://localhost:3001"]  # Support both dev ports
 CORS_CREDENTIALS = True
 CORS_METHODS = ["*"]
 CORS_HEADERS = ["*"]
