@@ -11,54 +11,67 @@ router = APIRouter(tags=["race"])
 
 
 # Mock race data - fallback when live data unavailable
+# Default: Vegas Grand Prix (simulating live data)
 CURRENT_RACE_STATE = {
-    "race_name": "Abu Dhabi Grand Prix",
+    "race_name": "Las Vegas Grand Prix",
     "season": 2025,
-    "current_lap": 25,
-    "total_laps": 58,
-    "race_time": "1:05:32.123",
-    "track_temp": 35.5,
-    "air_temp": 28.2,
+    "current_lap": 45,
+    "total_laps": 51,
+    "race_time": "1:35:42.123",
+    "track_temp": 32.5,
+    "air_temp": 22.1,
     "weather": "CLEAR",
     "safety_car_active": False,
     "safety_car_laps": 0,
     "status": "RUNNING",
     "drivers": [
         {
-            "name": "Hamilton",
-            "number": 44,
+            "name": "VER",
+            "number": 1,
             "position": 1,
-            "lap": 25,
-            "lap_time": "1:42.345",
-            "tire_compound": "MEDIUM",
-            "tire_age": 12,
-            "pit_stops": 0,
+            "lap": 45,
+            "lap_time": "1:44.123",
+            "tire_compound": "HARD",
+            "tire_age": 22,
+            "pit_stops": 1,
             "gap": 0.0,
             "gap_to_leader": 0.0,
         },
         {
-            "name": "Leclerc",
-            "number": 16,
+            "name": "RUS",
+            "number": 63,
             "position": 2,
-            "lap": 25,
-            "lap_time": "1:42.912",
-            "tire_compound": "MEDIUM",
-            "tire_age": 12,
-            "pit_stops": 0,
-            "gap": 1.234,
-            "gap_to_leader": 1.234,
+            "lap": 45,
+            "lap_time": "1:44.567",
+            "tire_compound": "HARD",
+            "tire_age": 18,
+            "pit_stops": 1,
+            "gap": 2.341,
+            "gap_to_leader": 2.341,
         },
         {
-            "name": "Norris",
-            "number": 4,
+            "name": "HAM",
+            "number": 44,
             "position": 3,
-            "lap": 25,
-            "lap_time": "1:43.102",
+            "lap": 45,
+            "lap_time": "1:44.892",
+            "tire_compound": "HARD",
+            "tire_age": 18,
+            "pit_stops": 1,
+            "gap": 4.567,
+            "gap_to_leader": 4.567,
+        },
+        {
+            "name": "LEC",
+            "number": 16,
+            "position": 4,
+            "lap": 45,
+            "lap_time": "1:45.234",
             "tire_compound": "SOFT",
             "tire_age": 8,
-            "pit_stops": 1,
-            "gap": 3.456,
-            "gap_to_leader": 3.456,
+            "pit_stops": 2,
+            "gap": 7.123,
+            "gap_to_leader": 7.123,
         },
     ],
 }
@@ -122,11 +135,14 @@ WEATHER_FORECAST = {
 @router.get(
     "/current",
     summary="Get current race state",
-    description="Get current race state including driver positions and telemetry",
+    description="Get current race state including driver positions and telemetry. Pass ?round=23 to load Vegas race.",
 )
-async def get_current_race_state():
+async def get_current_race_state(round: int = None):
     """
     Get current race state.
+
+    Query Parameters:
+    - round: Optional race round number (1-24) to load specific race
 
     Returns:
     - Race information (name, lap progress, etc)
@@ -135,10 +151,10 @@ async def get_current_race_state():
     - Safety car status
     """
     try:
-        logger.info("Current race state requested")
+        logger.info(f"Current race state requested{f' (round {round})' if round else ''}")
 
         # Try to fetch live data from FastF1
-        live_data = get_live_race_data()
+        live_data = get_live_race_data(race_round=round)
 
         if live_data:
             logger.info("Using live race data from FastF1")
