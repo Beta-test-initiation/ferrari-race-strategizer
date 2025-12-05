@@ -87,3 +87,9 @@ python3 scripts/merge_weather_into_stints.py
 
 This project is for educational and analytical purposes. F1 data usage complies with FastF1 API terms of service.
 
+
+
+https://github.com/user-attachments/assets/c54e029d-a336-4370-83c4-48eb9f238f85
+
+
+
